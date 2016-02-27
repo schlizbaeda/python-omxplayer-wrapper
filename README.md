@@ -8,6 +8,10 @@ Status](https://travis-ci.org/willprice/python-omxplayer-wrapper.svg)](https://t
 
 > Control OMXPlayer from Python on the Raspberry Pi.
 
+## adjustments for Python3 by schlizbaeda 
+bus_finder.py: cast/convert return value of command "filter" from type "iterator" to type "list"
+player.py: DON'T cast/convert return value of command "self._get_properties_interface().Duration()" to type "long"
+
 ## Install
 For someone who just wants to use the package:
 ```shell
