@@ -110,7 +110,6 @@ class OMXPlayer(object):
             logger.debug('DBus connect attempt: {}'.format(self.tries))
             try:
                 connection = Connection(bus_address_finder.get_address())
-                self.dbus_pid = bus_address_finder.get_process()
                 logger.debug(
                     'Connected to OMXPlayer at DBus address: %s' % connection)
                 return connection
@@ -135,8 +134,16 @@ class OMXPlayer(object):
                 return fn(self, *args, **kwargs)
             else:
                 logger.info('Process is no longer alive, can\'t run command')
-
+    
         return decorator(wrapped, fn)
+    #def _check_player_is_active(fn):
+    #    # wraps is a decorator that improves debugging wrapped methods
+    #    def wrapped(fun, self, *args, **kwargs):
+    #        # poll determines whether the process has terminated, if it hasn't it returns None.
+    #        if self._process.poll() is None:
+    #            return fun(self, *args, **kwargs)
+    #
+    #    return decorator(wrapped, fn)
 
     """ ROOT INTERFACE METHODS """
 
@@ -274,7 +281,8 @@ class OMXPlayer(object):
         Returns:
             long: The duration in microseconds
         """
-        return long(self._get_properties_interface().Duration())
+        #return long(self._get_properties_interface().Duration())
+        return self._get_properties_interface().Duration()
 
     @_check_player_is_active
     def duration(self):
@@ -428,18 +436,12 @@ class OMXPlayer(object):
     def quit(self):
         logger.debug('Quitting OMXPlayer')
         try:
-            os.killpg(self._process.pid, signal.SIGINT)
+            os.killpg(self._process.pid, signal.SIGTERM)
             self._process.wait()
             self._process_monitor.join()
-            logger.debug('SIGINT Sent to pid: %s' % self._process.pid)
+            logger.debug('SIGTERM Sent to pid: %s' % self._process.pid)
         except OSError:
             logger.error('Could not find the process to kill')
-        try:
-            os.kill(int(self.dbus_pid), signal.SIGTERM)
-        except OSError:
-            logger.error('Could not find the Dbus process to kill')
-        except:
-            pass
 
     @_check_player_is_active
     def get_filename(self):
@@ -448,9 +450,6 @@ class OMXPlayer(object):
             str: filename currently playing
         """
         return self._filename
-
-    def __del__(self):
-        self.quit()
 
 
 #  MediaPlayer2.Player types:
